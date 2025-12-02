@@ -140,7 +140,10 @@ Smart-Traffic-Management-System/
 
 ## 🖼️ Screenshots
 
-*Add screenshots of your dashboards here*
+<img width="732" height="950" alt="image" src="https://github.com/user-attachments/assets/bfd32331-65e1-4727-861c-23173a60a333" />
+<img width="1600" height="830" alt="image" src="https://github.com/user-attachments/assets/63c89546-86cd-4618-bf22-00f03b6b90b7" />
+
+
 
 ## 🤝 Contributing
 
@@ -152,7 +155,7 @@ This project is open source and available under the MIT License.
 
 ## 👨‍💻 Author
 
-Your Name - [Your GitHub Profile](https://github.com/YOUR_USERNAME)
+Your Name - [Your GitHub Profile](https://github.com/danishkhan226)
 
 ## 🙏 Acknowledgments
 
