@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+venv311/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.pickle
+video_uploads/
+video_results/
+video_frames/
+web_uploads/
+web_results/
+demo/
+yolo/frames/
+yolo/videos_raw/
+yolo/visualization_output/
+yolo/yolo-coco/
+yolo/uploads/
+yolo/static/
+
+
+# Large model files (comment out if you want to include them)
+*.pt
+yolo/*.pt
+
+# Temporary files
+*.log
+*.tmp
+arr.txt
+demo_response.json

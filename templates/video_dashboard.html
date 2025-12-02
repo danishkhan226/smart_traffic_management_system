@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic Management - Video Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 50px;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            background: #f8f9ff;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .upload-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .file-input-label:hover {
+            transform: scale(1.05);
+        }
+
+        .selected-file {
+            margin-top: 15px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .analyze-btn {
+            padding: 15px 50px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .analyze-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .video-info {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .video-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-item strong {
+            display: block;
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .frames-section {
+            margin-top: 30px;
+        }
+
+        .frames-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .frames-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .frame-card {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .frame-card img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .frame-info {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .frame-info p {
+            margin: 5px 0;
+        }
+
+        .new-analysis-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .new-analysis-btn:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Smart Traffic Management System</h1>
+            <p>Video Analysis Dashboard</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">🎬</div>
+                <h2>Upload Traffic Video</h2>
+                <p>Upload a video file to analyze traffic patterns</p>
+                <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                    Supported formats: MP4, AVI, MOV (Max 500MB)
+                </p>
+
+                <div class="file-input-wrapper">
+                    <input type="file" id="videoInput" accept="video/*">
+                    <label for="videoInput" class="file-input-label">Choose Video</label>
+                </div>
+
+                <div class="selected-file" id="selectedFile"></div>
+
+                <button class="analyze-btn" id="analyzeBtn">🔍 Analyze Video</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <h3 id="loadingText">Processing video...</h3>
+                <p id="loadingSubtext">Analyzing frames and detecting vehicles</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+            </div>
+
+            <div class="results" id="results">
+                <h2 style="color: #667eea; margin-bottom: 20px;">📊 Video Analysis Results</h2>
+
+                <div class="video-info">
+                    <h3>Video Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong id="videoFps">-</strong>
+                            <span>FPS</span>
+                        </div>
+                        <div class="info-item">
+                            <strong id="videoDuration">-</strong>
+                            <span>Duration (sec)</span>
+                        </div>
+                        <div class="info-item">
+                            <strong id="totalFrames">-</strong>
+                            <span>Total Frames</span>
+                        </div>
+                        <div class="info-item">
+                            <strong id="framesAnalyzed">-</strong>
+                            <span>Frames Analyzed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="totalDetections">0</h3>
+                        <p>Total Detections</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="avgVehicles">0</h3>
+                        <p>Avg Vehicles/Frame</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="maxVehicles">0</h3>
+                        <p>Peak Vehicles</p>
+                    </div>
+                </div>
+
+                <div class="frames-section">
+                    <h3>📸 Sample Frames with Detection</h3>
+                    <div class="frames-grid" id="framesGrid"></div>
+                </div>
+
+                <button class="new-analysis-btn" onclick="resetDashboard()">
+                    📤 Upload Another Video
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoInput = document.getElementById('videoInput');
+        const selectedFile = document.getElementById('selectedFile');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+
+        videoInput.addEventListener('change', () => {
+            const file = videoInput.files[0];
+            if (file) {
+                selectedFile.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                analyzeBtn.style.display = 'inline-block';
+            }
+        });
+
+        analyzeBtn.addEventListener('click', async () => {
+            const file = videoInput.files[0];
+            if (!file) return;
+
+            document.getElementById('uploadSection').style.display = 'none';
+            loading.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                if (progress <= 90) {
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressFill').textContent = progress + '%';
+                }
+            }, 500);
+
+            try {
+                const response = await fetch('/upload-video', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                document.getElementById('progressFill').style.width = '100%';
+                document.getElementById('progressFill').textContent = '100%';
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            // Video info
+            document.getElementById('videoFps').textContent = data.video_info.fps;
+            document.getElementById('videoDuration').textContent = data.video_info.duration.toFixed(2);
+            document.getElementById('totalFrames').textContent = data.video_info.total_frames;
+            document.getElementById('framesAnalyzed').textContent = data.video_info.frames_analyzed;
+
+            // Statistics
+            document.getElementById('totalDetections').textContent = data.statistics.total_detections;
+            document.getElementById('avgVehicles').textContent = data.statistics.average_vehicles;
+            document.getElementById('maxVehicles').textContent = data.statistics.max_vehicles;
+
+            // Frames
+            const framesGrid = document.getElementById('framesGrid');
+            framesGrid.innerHTML = '';
+
+            data.frame_results.forEach(frame => {
+                const card = document.createElement('div');
+                card.className = 'frame-card';
+                card.innerHTML = `
+                    <img src="${frame.image}" alt="Frame ${frame.frame_number}">
+                    <div class="frame-info">
+                        <p><strong>Frame:</strong> ${frame.frame_number}</p>
+                        <p><strong>Time:</strong> ${frame.timestamp.toFixed(2)}s</p>
+                        <p><strong>Vehicles:</strong> ${frame.vehicle_count}</p>
+                        ${Object.entries(frame.breakdown).map(([type, count]) =>
+                    `<p style="font-size: 0.9em;">• ${type}: ${count}</p>`
+                ).join('')}
+                    </div>
+                `;
+                framesGrid.appendChild(card);
+            });
+
+            results.style.display = 'block';
+        }
+
+        function resetDashboard() {
+            document.getElementById('uploadSection').style.display = 'block';
+            results.style.display = 'none';
+            videoInput.value = '';
+            selectedFile.textContent = '';
+            analyzeBtn.style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').textContent = '0%';
+        }
+    </script>
+</body>
+
+</html>
