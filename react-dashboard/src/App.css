@@ -1,0 +1,757 @@
+/* ============================================
+   APP COMPONENT STYLES
+   ============================================ */
+
+.app {
+    min-height: 100vh;
+    padding: var(--spacing-md);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    animation: fadeIn 0.8s ease-out;
+}
+
+.header-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: var(--spacing-sm);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+}
+
+.header-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-bottom: var(--spacing-md);
+}
+
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(245, 101, 101, 0.2);
+    border: 2px solid var(--accent-danger);
+    border-radius: 50px;
+    color: var(--accent-danger);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(245, 101, 101, 0.3);
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-danger);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   TAB NAVIGATION
+   ============================================ */
+
+.tab-navigation {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+    animation: fadeIn 0.6s ease-out 0.2s backwards;
+}
+
+.tab-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: var(--bg-card);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.tab-button:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.tab-button.active {
+    background: var(--bg-gradient-1);
+    border-color: transparent;
+    color: white;
+    box-shadow: var(--shadow-md), 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.tab-icon {
+    font-size: 1.5rem;
+}
+
+.tab-label {
+    font-weight: 600;
+}
+
+/* ============================================
+   DASHBOARD GRID
+   ============================================ */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   VIDEO FEED SECTION
+   ============================================ */
+
+.video-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    animation: scaleIn 0.6s ease-out;
+}
+
+.video-section:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(102, 126, 234, 0.2);
+}
+
+.video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ============================================
+   STATS GRID
+   ============================================ */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    animation: fadeIn 0.8s ease-out 0.2s backwards;
+}
+
+.stat-card {
+    position: relative;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    text-align: center;
+    overflow: hidden;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    animation: scaleIn 0.5s ease-out backwards;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    opacity: 0.9;
+    transition: opacity var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card:nth-child(1) {
+    background: var(--bg-gradient-1);
+    animation-delay: 0.1s;
+}
+
+.stat-card:nth-child(2) {
+    background: var(--bg-gradient-3);
+    animation-delay: 0.2s;
+}
+
+.stat-card:nth-child(3) {
+    background: var(--bg-gradient-4);
+    animation-delay: 0.3s;
+}
+
+.stat-value {
+    position: relative;
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: var(--spacing-xs);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform var(--transition-base);
+}
+
+.stat-card:hover .stat-value {
+    transform: scale(1.1);
+}
+
+.stat-label {
+    position: relative;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-icon {
+    position: relative;
+    font-size: 2rem;
+    margin-bottom: var(--spacing-xs);
+    opacity: 0.8;
+}
+
+/* ============================================
+   VEHICLE BREAKDOWN SECTION
+   ============================================ */
+
+.breakdown-section {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    animation: fadeIn 0.8s ease-out 0.4s backwards;
+}
+
+.breakdown-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.breakdown-item {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+    transition: all var(--transition-base);
+    animation: scaleIn 0.4s ease-out backwards;
+}
+
+.breakdown-item:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.breakdown-count {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.breakdown-type {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.no-vehicles {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.timestamp {
+    text-align: center;
+    margin-top: var(--spacing-md);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* ============================================
+   CONTROL PANEL
+   ============================================ */
+
+.controls-section {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    animation: fadeIn 0.8s ease-out 0.6s backwards;
+}
+
+.control-btn {
+    padding: 1rem 2rem;
+    background: var(--bg-gradient-1);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+.control-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* ============================================
+   IMAGE UPLOAD SECTION
+   ============================================ */
+
+.image-upload-section {
+    position: relative;
+}
+
+.upload-zone {
+    background: var(--bg-card);
+    border: 3px dashed rgba(102, 126, 234, 0.5);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    transition: all var(--transition-base);
+    animation: fadeIn 0.6s ease-out;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent-secondary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.upload-zone.dragging {
+    border-color: var(--accent-success);
+    background: rgba(72, 187, 120, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.upload-zone h2 {
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.upload-zone p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.file-input-wrapper {
+    margin: var(--spacing-md) 0;
+}
+
+.file-input-label {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: var(--bg-gradient-1);
+    color: white;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    transition: transform var(--transition-base);
+}
+
+.file-input-label:hover {
+    transform: scale(1.05);
+}
+
+.selected-file {
+    margin-top: var(--spacing-md);
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.analyze-btn-primary {
+    padding: 1rem 3rem;
+    background: var(--accent-success);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: var(--spacing-md);
+    transition: all var(--transition-base);
+}
+
+.analyze-btn-primary:hover:not(:disabled) {
+    background: #38a169;
+    transform: scale(1.05);
+}
+
+.analyze-btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.spinner {
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top: 5px solid var(--accent-primary);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--spacing-md);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-overlay h3 {
+    color: white;
+    margin-bottom: var(--spacing-sm);
+}
+
+.loading-overlay p {
+    color: var(--text-secondary);
+}
+
+.error-message {
+    background: rgba(245, 101, 101, 0.2);
+    border: 2px solid var(--accent-danger);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    color: var(--accent-danger);
+    text-align: center;
+}
+
+/* ============================================
+   MULTI-LANE ANALYSIS
+   ============================================ */
+
+.upload-grid-multi {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.lane-upload-card {
+    background: var(--bg-card);
+    border: 3px dashed rgba(102, 126, 234, 0.5);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+.lane-upload-card:hover {
+    border-color: var(--accent-secondary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.lane-icon-large {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.lane-upload-card h3 {
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.file-input-label-small {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-gradient-1);
+    color: white;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform var(--transition-base);
+}
+
+.file-input-label-small:hover {
+    transform: scale(1.05);
+}
+
+.selected-file-small {
+    margin-top: var(--spacing-sm);
+    color: var(--accent-success);
+    font-size: 0.9rem;
+}
+
+.analyze-btn-full {
+    width: 100%;
+    padding: 1.25rem;
+    background: var(--accent-success);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-base);
+}
+
+.analyze-btn-full:hover:not(:disabled) {
+    background: #38a169;
+    transform: scale(1.02);
+}
+
+.analyze-btn-full:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Signal Control */
+.signal-control-section {
+    background: var(--bg-card);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.signals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.signal-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    border-left: 5px solid #ccc;
+}
+
+.signal-item.green {
+    border-left-color: var(--accent-success);
+}
+
+.signal-item.red {
+    border-left-color: var(--accent-danger);
+}
+
+.signal-light {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: var(--spacing-md);
+}
+
+.signal-light.green {
+    background: var(--accent-success);
+    box-shadow: 0 0 20px var(--accent-success);
+}
+
+.signal-light.red {
+    background: var(--accent-danger);
+}
+
+.signal-info h4 {
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.signal-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Lane Results Grid */
+.lane-results-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.lane-result-card {
+    background: var(--bg-card);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+}
+
+.lane-breakdown {
+    background: rgba(255, 255, 255, 0.05);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+}
+
+.breakdown-item-small {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   INFO BOX
+   ============================================ */
+
+.info-box {
+    background: rgba(237, 137, 54, 0.1);
+    border: 2px solid rgba(237, 137, 54, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+    animation: fadeIn 0.8s ease-out 0.8s backwards;
+}
+
+.info-box h4 {
+    color: var(--accent-warning);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-box p {
+    color: var(--text-secondary);
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.info-box strong {
+    color: var(--text-primary);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 2rem;
+    }
+
+    .header-subtitle {
+        font-size: 1rem;
+    }
+
+    .tab-navigation {
+        flex-direction: column;
+    }
+
+    .tab-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .breakdown-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+    }
+
+    .video-section,
+    .breakdown-section {
+        padding: var(--spacing-md);
+    }
+
+    .controls-section {
+        flex-direction: column;
+    }
+
+    .control-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .upload-grid-multi,
+    .signals-grid,
+    .lane-results-grid {
+        grid-template-columns: 1fr;
+    }
+}
