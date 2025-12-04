@@ -3,7 +3,8 @@ export default function TabNavigation({ activeTab, onTabChange }) {
         { id: 'live', label: 'Live Camera', icon: '📹' },
         { id: 'image', label: 'Image Upload', icon: '📸' },
         { id: 'video', label: 'Video Analysis', icon: '🎥' },
-        { id: 'multi', label: '4-Way Intersection', icon: '🚦' }
+        { id: 'multi', label: '4-Way Intersection', icon: '🚦' },
+        { id: 'path', label: 'Shortest Path', icon: '🗺️' }
     ];
 
     return (

@@ -1,15 +1,21 @@
+import AnimatedCounter from './AnimatedCounter';
+
 export default function StatsCards({ stats }) {
     return (
         <div className="stats-grid">
             <div className="stat-card">
                 <div className="stat-icon">🚗</div>
-                <div className="stat-value">{stats.vehicle_count || 0}</div>
+                <div className="stat-value">
+                    <AnimatedCounter value={stats.vehicle_count || 0} />
+                </div>
                 <div className="stat-label">Current Vehicles</div>
             </div>
 
             <div className="stat-card">
                 <div className="stat-icon">⚡</div>
-                <div className="stat-value">{stats.fps || 0}</div>
+                <div className="stat-value">
+                    <AnimatedCounter value={stats.fps || 0} decimals={1} />
+                </div>
                 <div className="stat-label">FPS</div>
             </div>
 

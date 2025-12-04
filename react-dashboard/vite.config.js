@@ -34,6 +34,10 @@ export default defineConfig({
             '/frames': {
                 target: 'http://localhost:5005',
                 changeOrigin: true
+            },
+            '/api': {
+                target: 'http://localhost:5005',
+                changeOrigin: true
             }
         }
     }

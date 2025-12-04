@@ -63,7 +63,7 @@ export default function VideoAnalysis() {
                     <div className="stat-card" style={{ background: 'var(--bg-gradient-1)' }}>
                         <div className="stat-icon">🚗</div>
                         <div className="stat-value">{results.total_vehicles}</div>
-                        <div className="stat-label">Total Vehicles</div>
+                        <div className="stat-label">Peak Vehicles</div>
                     </div>
                     <div className="stat-card" style={{ background: 'var(--bg-gradient-3)' }}>
                         <div className="stat-icon">🎬</div>

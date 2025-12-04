@@ -465,7 +465,8 @@ def upload_video():
         frame_skip = max(1, fps // 2)  # Process 2 frames per second
         
         frame_results = []
-        total_vehicles = 0
+        max_vehicles = 0  # Track peak vehicles in a single frame
+        total_vehicles_sum = 0  # For calculating average
         overall_breakdown = {}
         frame_count = 0
         processed_count = 0
@@ -489,7 +490,9 @@ def upload_video():
                 cv2.imwrite(frame_path, processed_frame)
                 
                 # Update statistics
-                total_vehicles += count
+                max_vehicles = max(max_vehicles, count)  # Track peak
+                total_vehicles_sum += count  # For average calculation
+                
                 for vtype, vcount in breakdown.items():
                     overall_breakdown[vtype] = overall_breakdown.get(vtype, 0) + vcount
                 
@@ -506,13 +509,15 @@ def upload_video():
         
         cap.release()
         
+        avg_vehicles = round(total_vehicles_sum / processed_count, 1) if processed_count > 0 else 0
+        
         return jsonify({
             'success': True,
             'total_frames': total_frames,
             'processed_frames': processed_count,
             'fps': fps,
-            'total_vehicles': total_vehicles,
-            'avg_vehicles_per_frame': round(total_vehicles / processed_count, 2) if processed_count > 0 else 0,
+            'total_vehicles': max_vehicles,  # Now shows peak instead of cumulative
+            'avg_vehicles_per_frame': avg_vehicles,
             'overall_breakdown': overall_breakdown,
             'frames': frame_results[:20]  # Return first 20 frames
         })
@@ -534,6 +539,92 @@ def get_result(filename):
 def get_frame(filename):
     """Serve video frames"""
     return send_from_directory(app.config['VIDEO_FRAMES_FOLDER'], filename)
+
+# =============================================================================
+# SHORTEST PATH ROUTING
+# =============================================================================
+
+from shortest_path import ShortestPathFinder
+
+# Initialize shortest path finder
+try:
+    path_finder = ShortestPathFinder('data/bangalore_network.pkl')
+    if path_finder.is_ready():
+        print("✓ Bangalore road network loaded for routing")
+        print(f"  Network stats: {path_finder.get_network_stats()}")
+    else:
+        path_finder = None
+        print("⚠ Road network not found - run 'python download_network.py'")
+except Exception as e:
+    path_finder = None
+    print(f"⚠ Could not load road network: {e}")
+
+@app.route('/api/geocode', methods=['POST'])
+def geocode_address():
+    """Convert address to coordinates"""
+    if not path_finder or not path_finder.is_ready():
+        return jsonify({'error': 'Routing service not available'}), 503
+    
+    data = request.json
+    address = data.get('address')
+    
+    if not address:
+        return jsonify({'error': 'Address is required'}), 400
+    
+    try:
+        coords = path_finder.geocode(address)
+        if coords:
+            return jsonify({
+                'success': True,
+                'lat': coords[0],
+                'lng': coords[1],
+                'address': address
+            })
+        else:
+            return jsonify({'error': 'Address not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/calculate-route', methods=['POST'])
+def calculate_route():
+    """Calculate shortest path between two points"""
+    if not path_finder or not path_finder.is_ready():
+        return jsonify({'error': 'Routing service not available'}), 503
+    
+    data = request.json
+    origin = data.get('origin')  # {lat, lng}
+    destination = data.get('destination')  # {lat, lng}
+    
+    if not origin or not destination:
+        return jsonify({'error': 'Origin and destination are required'}), 400
+    
+    try:
+        result = path_finder.calculate_route(
+            origin['lat'], origin['lng'],
+            destination['lat'], destination['lng']
+        )
+        
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/network-stats', methods=['GET'])
+def get_network_stats():
+    """Get statistics about the loaded road network"""
+    if not path_finder or not path_finder.is_ready():
+        return jsonify({'error': 'Routing service not available'}), 503
+    
+    stats = path_finder.get_network_stats()
+    return jsonify({
+        'success': True,
+        **stats
+    })
 
 # =============================================================================
 # MAIN
