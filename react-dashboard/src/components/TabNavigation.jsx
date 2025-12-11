@@ -4,6 +4,7 @@ export default function TabNavigation({ activeTab, onTabChange }) {
         { id: 'image', label: 'Image Upload', icon: '📸' },
         { id: 'video', label: 'Video Analysis', icon: '🎥' },
         { id: 'multi', label: '4-Way Intersection', icon: '🚦' },
+        { id: 'emergency', label: 'Emergency Vehicle', icon: '🚨' },
         { id: 'path', label: 'Shortest Path', icon: '🗺️' }
     ];
 

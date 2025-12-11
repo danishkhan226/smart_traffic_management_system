@@ -32,9 +32,11 @@ An intelligent traffic management system that uses computer vision and YOLO obje
 
 ## 🚀 Installation
 
+### Backend Setup (Python)
+
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/Smart-Traffic-Management-System.git
+git clone https://github.com/danishkhan226/Smart-Traffic-Management-System.git
 cd Smart-Traffic-Management-System
 ```
 
@@ -52,22 +54,56 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-5. Download YOLO weights:
-   - The YOLOv8n model weights should be placed in the project root as `yolov8n.pt`
-   - You can download them from the official Ultralytics repository
+5. Download road network data (for routing):
+```bash
+python download_network.py
+```
+
+### Frontend Setup (React Dashboard)
+
+```bash
+cd react-dashboard
+npm install
+cd ..
+```
 
 ## 📖 Usage
 
-### Quick Start (All Dashboards)
+### 🎯 Recommended: React Dashboard (Full-Featured)
+
+**IMPORTANT**: You must run BOTH the backend and frontend!
+
+#### Option 1: Quick Start (Windows)
 ```bash
-START_ALL.bat
-```
-or
-```bash
-python start_all_dashboards.py
+START_DASHBOARD.bat
 ```
 
-### Individual Components
+#### Option 2: Manual Start (Two Terminals)
+
+**Terminal 1 - Backend:**
+```bash
+python unified_backend.py
+```
+Backend will run on `http://localhost:5005`
+
+**Terminal 2 - Frontend:**
+```bash
+cd react-dashboard
+npm run dev
+```
+Frontend will run on `http://localhost:5173`
+
+**Access at**: `http://localhost:5173`
+
+### ⚠️ Troubleshooting
+
+**Error**: "Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+- **Cause**: Backend is not running
+- **Solution**: Make sure `python unified_backend.py` is running in a separate terminal
+
+---
+
+### Legacy Dashboards (Individual Components)
 
 #### Web Dashboard (Video Upload)
 ```bash

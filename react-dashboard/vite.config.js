@@ -38,6 +38,10 @@ export default defineConfig({
             '/api': {
                 target: 'http://localhost:5005',
                 changeOrigin: true
+            },
+            '/upload-emergency': {
+                target: 'http://localhost:5005',
+                changeOrigin: true
             }
         }
     }

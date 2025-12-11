@@ -5,6 +5,7 @@ import LiveCameraView from '../components/LiveCameraView';
 import ImageUpload from '../components/ImageUpload';
 import VideoAnalysis from '../components/VideoAnalysis';
 import MultiLaneAnalysis from '../components/MultiLaneAnalysis';
+import EmergencyVehicleDetection from '../components/EmergencyVehicleDetection';
 import ShortestPath from '../components/ShortestPath';
 import ControlPanel from '../components/ControlPanel';
 
@@ -21,6 +22,8 @@ export default function Dashboard() {
                 return <VideoAnalysis />;
             case 'multi':
                 return <MultiLaneAnalysis />;
+            case 'emergency':
+                return <EmergencyVehicleDetection />;
             case 'path':
                 return <ShortestPath />;
             default:
@@ -30,14 +33,14 @@ export default function Dashboard() {
 
     return (
         <div className="app">
-            <div className="container">
-                {/* Header */}
-                <header className="header">
-                    <h1 className="header-title">
+            <div className="app-container">
+                {/* Header - Enhanced with new design */}
+                <header className="app-header">
+                    <h1 className="app-title">
                         Smart Traffic Management System
                     </h1>
-                    <p className="header-subtitle">
-                        Real-Time Vehicle Detection & Monitoring
+                    <p className="app-subtitle">
+                        Real-Time Intelligence • Adaptive Control • Future Ready
                     </p>
                     {activeTab === 'live' && (
                         <div className="live-badge">
@@ -58,63 +61,76 @@ export default function Dashboard() {
                     {/* Control Panel (only show on live tab) */}
                     {activeTab === 'live' && <ControlPanel />}
 
-                    {/* Information Box */}
-                    <div className="info-box">
-                        <h4>
-                            <span>ℹ️</span>
-                            {activeTab === 'live' ? 'Live Camera Information' :
-                                activeTab === 'image' ? 'Image Upload Information' :
-                                    activeTab === 'video' ? 'Video Analysis Information' :
-                                        activeTab === 'multi' ? '4-Way Intersection Information' :
-                                            'City-Scale Routing Information'}
-                        </h4>
+                    {/* Information Box - Enhanced with cyber-alert styling */}
+                    <div className="cyber-alert cyber-alert-info slide-in-up" style={{ animationDelay: '0.6s' }}>
+                        <span style={{ fontSize: '1.5rem' }}>ℹ️</span>
+                        <div style={{ flex: 1 }}>
+                            <h4 style={{ marginBottom: '12px', color: 'var(--color-neon-blue)' }}>
+                                {activeTab === 'live' ? 'Live Camera Information' :
+                                    activeTab === 'image' ? 'Image Upload Information' :
+                                        activeTab === 'video' ? 'Video Analysis Information' :
+                                            activeTab === 'multi' ? '4-Way Intersection Information' :
+                                                activeTab === 'emergency' ? 'Emergency Vehicle Detection Information' :
+                                                    'City-Scale Routing Information'}
+                            </h4>
 
-                        {activeTab === 'live' && (
-                            <>
-                                <p><strong>Detection Model:</strong> YOLO (You Only Look Once) - Real-time object detection</p>
-                                <p><strong>Camera Source:</strong> Webcam or IP Camera (Configurable)</p>
-                                <p><strong>Update Rate:</strong> Live streaming with continuous analysis</p>
-                            </>
-                        )}
+                            {activeTab === 'live' && (
+                                <>
+                                    <p><strong>Detection Model:</strong> YOLO (You Only Look Once) - Real-time object detection</p>
+                                    <p><strong>Camera Source:</strong> Webcam or IP Camera (Configurable)</p>
+                                    <p><strong>Update Rate:</strong> Live streaming with continuous analysis</p>
+                                </>
+                            )}
 
-                        {activeTab === 'image' && (
-                            <>
-                                <p><strong>Detection Model:</strong> YOLO v3/v8 for accurate vehicle detection</p>
-                                <p><strong>Supported Formats:</strong> JPG, PNG, BMP, TIFF</p>
-                                <p><strong>Max File Size:</strong> 16MB</p>
-                                <p><strong>Features:</strong> Drag & drop support, instant results</p>
-                            </>
-                        )}
+                            {activeTab === 'image' && (
+                                <>
+                                    <p><strong>Detection Model:</strong> YOLO v3/v8 for accurate vehicle detection</p>
+                                    <p><strong>Supported Formats:</strong> JPG, PNG, BMP, TIFF</p>
+                                    <p><strong>Max File Size:</strong> 16MB</p>
+                                    <p><strong>Features:</strong> Drag & drop support, instant results</p>
+                                </>
+                            )}
 
-                        {activeTab === 'video' && (
-                            <>
-                                <p><strong>Detection Model:</strong> Frame-by-frame YOLO analysis</p>
-                                <p><strong>Supported Formats:</strong> MP4, AVI, MOV, MKV</p>
-                                <p><strong>Max File Size:</strong> 100MB</p>
-                                <p><strong>Processing:</strong> Analyzes 2 frames per second for efficiency</p>
-                                <p><strong>Results:</strong> Overall statistics and sample processed frames</p>
-                            </>
-                        )}
+                            {activeTab === 'video' && (
+                                <>
+                                    <p><strong>Detection Model:</strong> Frame-by-frame YOLO analysis</p>
+                                    <p><strong>Supported Formats:</strong> MP4, AVI, MOV, MKV</p>
+                                    <p><strong>Max File Size:</strong> 100MB</p>
+                                    <p><strong>Processing:</strong> Analyzes 2 frames per second for efficiency</p>
+                                    <p><strong>Results:</strong> Overall statistics and sample processed frames</p>
+                                </>
+                            )}
 
-                        {activeTab === 'multi' && (
-                            <>
-                                <p><strong>Purpose:</strong> Simulate 4-way intersection traffic flow</p>
-                                <p><strong>Signal Control:</strong> Automatic green light assignment based on vehicle density</p>
-                                <p><strong>Analysis:</strong> Per-lane vehicle detection and breakdown</p>
-                                <p><strong>Upload:</strong> 1-4 images for different lanes</p>
-                            </>
-                        )}
+                            {activeTab === 'multi' && (
+                                <>
+                                    <p><strong>Purpose:</strong> Simulate 4-way intersection traffic flow</p>
+                                    <p><strong>Signal Control:</strong> Automatic green light assignment based on vehicle density</p>
+                                    <p><strong>Analysis:</strong> Per-lane vehicle detection and breakdown</p>
+                                    <p><strong>Upload:</strong> 1-4 images for different lanes</p>
+                                </>
+                            )}
 
-                        {activeTab === 'path' && (
-                            <>
-                                <p><strong>Algorithm:</strong> Dijkstra's Shortest Path Algorithm</p>
-                                <p><strong>Data Source:</strong> OpenStreetMap (Real Bangalore Network)</p>
-                                <p><strong>Features:</strong> Address geocoding, distance calculation, time estimation</p>
-                                <p><strong>Coverage:</strong> Complete Bangalore city road network</p>
-                            </>
-                        )}
+                            {activeTab === 'emergency' && (
+                                <>
+                                    <p><strong>Purpose:</strong> Priority signal control for emergency vehicles</p>
+                                    <p><strong>Detection Model:</strong> Custom-trained YOLO model (best.pt) for ambulance detection</p>
+                                    <p><strong>Priority Logic:</strong> Emergency vehicles ALWAYS get priority regardless of traffic density</p>
+                                    <p><strong>Visual Indicator:</strong> Red boxes highlight lanes with detected emergency vehicles</p>
+                                    <p><strong>Upload:</strong> 1-4 images to simulate intersection scenarios</p>
+                                </>
+                            )}
 
-                        <p><strong>Detected Types:</strong> Cars, Trucks, Buses, Motorcycles, Bicycles</p>
+                            {activeTab === 'path' && (
+                                <>
+                                    <p><strong>Algorithm:</strong> Dijkstra's Shortest Path Algorithm</p>
+                                    <p><strong>Data Source:</strong> OpenStreetMap (Real Bangalore Network)</p>
+                                    <p><strong>Features:</strong> Address geocoding, distance calculation, time estimation</p>
+                                    <p><strong>Coverage:</strong> Complete Bangalore city road network</p>
+                                </>
+                            )}
+
+                            <p style={{ marginTop: '12px' }}><strong>Detected Types:</strong> Cars, Trucks, Buses, Motorcycles, Bicycles</p>
+                        </div>
                     </div>
                 </div>
             </div>

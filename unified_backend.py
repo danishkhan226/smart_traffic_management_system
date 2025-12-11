@@ -26,15 +26,11 @@ app.config['RESULTS_FOLDER'] = RESULTS_FOLDER
 app.config['VIDEO_FRAMES_FOLDER'] = VIDEO_FRAMES_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max
 
-# Try to import PyTorch and Ultralytics for GPU acceleration
-USE_PYTORCH = False
-try:
-    import torch
-    from ultralytics import YOLO
-    USE_PYTORCH = True
-    print("✓ PyTorch available - will attempt GPU acceleration")
-except ImportError:
-    print("⚠ PyTorch not available - using OpenCV YOLO")
+# =============================================================================
+# DUAL YOLO CONFIGURATION
+# - PyTorch YOLO: For live camera detection (GPU-accelerated if available)
+# - OpenCV YOLO: For image upload, video analysis, and multi-lane intersection
+# =============================================================================
 
 # Global variables for live camera
 current_stats = {
@@ -47,14 +43,148 @@ current_stats = {
 stats_lock = threading.Lock()
 camera_source = 0
 
+print("\n" + "=" * 70)
+print("INITIALIZING DUAL YOLO CONFIGURATION")
+print("=" * 70)
+
 # =============================================================================
-# PYTORCH YOLO IMPLEMENTATION (GPU-Accelerated)
+# OPENCV YOLO IMPLEMENTATION (CPU-Optimized) - ALWAYS LOADED
+# Used for: Image Upload, Video Analysis, Multi-Lane Intersection
 # =============================================================================
 
-if USE_PYTORCH:
-    print("\n" + "=" * 70)
-    print("INITIALIZING PYTORCH YOLO (GPU-ACCELERATED)")
-    print("=" * 70)
+print("\n[1/2] Loading OpenCV YOLO (for Image/Video/Multi-Lane)...")
+yolo_dir = 'yolo'
+labels_path = f'{yolo_dir}/yolo-coco/coco.names'
+weights_path = f'{yolo_dir}/yolo-coco/yolov3.weights'
+config_path = f'{yolo_dir}/yolo-coco/yolov3.cfg'
+
+opencv_net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
+opencv_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+opencv_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+
+LABELS = open(labels_path).read().strip().split("\n")
+vehicle_types = {'car', 'truck', 'bus', 'bicycle', 'motorbike', 'motorcycle'}
+
+np.random.seed(42)
+COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
+
+print("✓ OpenCV YOLOv3 model loaded on CPU!")
+
+def calculate_iou(box1, box2):
+    """Calculate Intersection over Union (IoU) between two bounding boxes.
+    Boxes are in format [x, y, width, height]"""
+    x1, y1, w1, h1 = box1
+    x2, y2, w2, h2 = box2
+    
+    # Calculate intersection area
+    x_left = max(x1, x2)
+    y_top = max(y1, y2)
+    x_right = min(x1 + w1, x2 + w2)
+    y_bottom = min(y1 + h1, y2 + h2)
+    
+    if x_right < x_left or y_bottom < y_top:
+        return 0.0
+    
+    intersection_area = (x_right - x_left) * (y_bottom - y_top)
+    box1_area = w1 * h1
+    box2_area = w2 * h2
+    union_area = box1_area + box2_area - intersection_area
+    
+    return intersection_area / union_area if union_area > 0 else 0.0
+
+def detect_vehicles_opencv(frame, confidence=0.5, threshold=0.3, exclude_boxes=None):
+    """Detect vehicles using OpenCV YOLO - for image/video/multi-lane
+    
+    Args:
+        frame: Image frame to process
+        confidence: Detection confidence threshold
+        threshold: NMS threshold
+        exclude_boxes: List of bounding boxes to exclude (e.g., emergency vehicles)
+                      Format: [[x, y, w, h], ...]
+    """
+    (H, W) = frame.shape[:2]
+    
+    ln = opencv_net.getLayerNames()
+    ln = [ln[i - 1] for i in opencv_net.getUnconnectedOutLayers().flatten()]
+    
+    blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
+    opencv_net.setInput(blob)
+    layerOutputs = opencv_net.forward(ln)
+    
+    boxes = []
+    confidences = []
+    classIDs = []
+    
+    for output in layerOutputs:
+        for detection in output:
+            scores = detection[5:]
+            classID = np.argmax(scores)
+            conf = scores[classID]
+            
+            if conf > confidence:
+                box = detection[0:4] * np.array([W, H, W, H])
+                (centerX, centerY, width, height) = box.astype("int")
+                x = int(centerX - (width / 2))
+                y = int(centerY - (height / 2))
+                boxes.append([x, y, int(width), int(height)])
+                confidences.append(float(conf))
+                classIDs.append(classID)
+    
+    idxs = cv2.dnn.NMSBoxes(boxes, confidences, confidence, threshold)
+    
+    vehicle_count = 0
+    vehicle_breakdown = {}
+    detections = []
+    
+    if len(idxs) > 0:
+        for i in idxs.flatten():
+            label = LABELS[classIDs[i]]
+            
+            if label in vehicle_types:
+                # Check if this detection overlaps with any excluded boxes (e.g., emergency vehicles)
+                is_excluded = False
+                if exclude_boxes:
+                    current_box = boxes[i]
+                    for exclude_box in exclude_boxes:
+                        iou = calculate_iou(current_box, exclude_box)
+                        if iou > 0.3:  # If overlap is more than 30%, skip this detection
+                            is_excluded = True
+                            print(f"  Skipping {label} detection (overlaps with emergency vehicle, IoU={iou:.2f})")
+                            break
+                
+                if is_excluded:
+                    continue
+                
+                vehicle_count += 1
+                vehicle_breakdown[label] = vehicle_breakdown.get(label, 0) + 1
+                
+                (x, y, w, h) = boxes[i]
+                color = [int(c) for c in COLORS[classIDs[i]]]
+                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                
+                text = f"{label}: {confidences[i]:.2f}"
+                cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 
+                           0.5, color, 2)
+                
+                detections.append({
+                    'type': label,
+                    'confidence': f"{confidences[i]:.2%}",
+                    'bbox': [x, y, w, h]
+                })
+    
+    return frame, vehicle_count, vehicle_breakdown, detections
+
+# =============================================================================
+# PYTORCH YOLO IMPLEMENTATION (GPU-Accelerated) - OPTIONAL
+# Used for: Live Camera Detection Only
+# =============================================================================
+
+USE_PYTORCH_LIVE = False
+try:
+    print("\n[2/2] Loading PyTorch YOLO (for Live Camera)...")
+    import torch
+    from ultralytics import YOLO
+    
     print(f"PyTorch version: {torch.__version__}")
     print(f"CUDA available: {torch.cuda.is_available()}")
     
@@ -67,17 +197,19 @@ if USE_PYTORCH:
         print("⚠ GPU not detected, using CPU with PyTorch")
         current_stats['device'] = "CPU (PyTorch)"
     
-    model = YOLO('yolov8n.pt')
-    model.to(device)
-    print(f"✓ YOLOv8 model loaded on {device.upper()}!")
+    pytorch_model = YOLO('yolov8n.pt')
+    pytorch_model.to(device)
+    print(f"✓ PyTorch YOLOv8 model loaded on {device.upper()}!")
     
     vehicle_classes = [2, 3, 5, 7]  # car, motorcycle, bus, truck
     vehicle_names = {2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck'}
     
+    USE_PYTORCH_LIVE = True
+    
     def detect_vehicles_pytorch(frame, confidence=0.4):
-        """Detect vehicles using PyTorch YOLO"""
+        """Detect vehicles using PyTorch YOLO - for live camera only"""
         (H, W) = frame.shape[:2]
-        results = model(frame, conf=confidence, device=device, verbose=False)[0]
+        results = pytorch_model(frame, conf=confidence, device=device, verbose=False)[0]
         
         vehicle_count = 0
         vehicle_breakdown = {}
@@ -107,103 +239,91 @@ if USE_PYTORCH:
                 })
         
         return frame, vehicle_count, vehicle_breakdown, detections
-
-# =============================================================================
-# OPENCV YOLO IMPLEMENTATION (CPU-Optimized)
-# =============================================================================
-
-else:
-    print("\n" + "=" * 70)
-    print("INITIALIZING OPENCV YOLO (CPU-OPTIMIZED)")
-    print("=" * 70)
     
-    yolo_dir = 'yolo'
-    labels_path = f'{yolo_dir}/yolo-coco/coco.names'
-    weights_path = f'{yolo_dir}/yolo-coco/yolov3.weights'
-    config_path = f'{yolo_dir}/yolo-coco/yolov3.cfg'
-    
-    net = cv2.dnn.readNetFromDarknet(config_path, weights_path)
-    net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
-    net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
-    
-    LABELS = open(labels_path).read().strip().split("\n")
-    vehicle_types = {'car', 'truck', 'bus', 'bicycle', 'motorbike', 'motorcycle'}
-    
-    np.random.seed(42)
-    COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
-    
+except ImportError as e:
+    print(f"⚠ PyTorch not available: {e}")
+    print("→ Live camera will use OpenCV YOLO (CPU)")
     current_stats['device'] = "CPU (OpenCV)"
-    print("✓ YOLOv3 model loaded on CPU!")
+    USE_PYTORCH_LIVE = False
+
+# =============================================================================
+# EMERGENCY VEHICLE DETECTION (best.pt model)
+# Used for: Emergency Vehicle Detection Feature
+# =============================================================================
+
+EMERGENCY_MODEL_AVAILABLE = False
+emergency_model = None
+
+try:
+    print("\n[EMERGENCY] Loading Emergency Vehicle Detection Model...")
+    import torch
+    from ultralytics import YOLO
     
-    def detect_vehicles_opencv(frame, confidence=0.5, threshold=0.3):
-        """Detect vehicles using OpenCV YOLO"""
+    # Load the custom trained best.pt model for ambulance detection
+    emergency_model = YOLO('best.pt')
+    
+    if torch.cuda.is_available():
+        emergency_device = 'cuda'
+        emergency_model.to(emergency_device)
+        print(f"✓ Emergency vehicle model (best.pt) loaded on GPU!")
+    else:
+        emergency_device = 'cpu'
+        print("✓ Emergency vehicle model (best.pt) loaded on CPU")
+    
+    EMERGENCY_MODEL_AVAILABLE = True
+    
+    def detect_emergency_vehicles(frame, confidence=0.4):
+        """Detect emergency vehicles (ambulances) using custom best.pt model"""
         (H, W) = frame.shape[:2]
+        results = emergency_model(frame, conf=confidence, device=emergency_device, verbose=False)[0]
         
-        ln = net.getLayerNames()
-        ln = [ln[i - 1] for i in net.getUnconnectedOutLayers().flatten()]
+        emergency_count = 0
+        emergency_detections = []
         
-        blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
-        net.setInput(blob)
-        layerOutputs = net.forward(ln)
+        for detection in results.boxes.data:
+            x1, y1, x2, y2, conf, cls = detection
+            
+            # Assuming class 0 is ambulance/emergency vehicle in best.pt model
+            emergency_count += 1
+            
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+            
+            # Draw RED bounding box for emergency vehicles
+            color = (0, 0, 255)  # Red color for emergency vehicles
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3)
+            
+            label = f"AMBULANCE {conf:.2f}"
+            # Add text with background for better visibility
+            (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+            cv2.rectangle(frame, (x1, y1 - text_h - 10), (x1 + text_w, y1), color, -1)
+            cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 
+                       0.6, (255, 255, 255), 2)
+            
+            emergency_detections.append({
+                'type': 'ambulance',
+                'confidence': f"{conf:.2%}",
+                'bbox': [x1, y1, x2-x1, y2-y1]
+            })
         
-        boxes = []
-        confidences = []
-        classIDs = []
-        
-        for output in layerOutputs:
-            for detection in output:
-                scores = detection[5:]
-                classID = np.argmax(scores)
-                conf = scores[classID]
-                
-                if conf > confidence:
-                    box = detection[0:4] * np.array([W, H, W, H])
-                    (centerX, centerY, width, height) = box.astype("int")
-                    x = int(centerX - (width / 2))
-                    y = int(centerY - (height / 2))
-                    boxes.append([x, y, int(width), int(height)])
-                    confidences.append(float(conf))
-                    classIDs.append(classID)
-        
-        idxs = cv2.dnn.NMSBoxes(boxes, confidences, confidence, threshold)
-        
-        vehicle_count = 0
-        vehicle_breakdown = {}
-        detections = []
-        
-        if len(idxs) > 0:
-            for i in idxs.flatten():
-                label = LABELS[classIDs[i]]
-                
-                if label in vehicle_types:
-                    vehicle_count += 1
-                    vehicle_breakdown[label] = vehicle_breakdown.get(label, 0) + 1
-                    
-                    (x, y, w, h) = boxes[i]
-                    color = [int(c) for c in COLORS[classIDs[i]]]
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                    
-                    text = f"{label}: {confidences[i]:.2f}"
-                    cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 
-                               0.5, color, 2)
-                    
-                    detections.append({
-                        'type': label,
-                        'confidence': f"{confidences[i]:.2%}",
-                        'bbox': [x, y, w, h]
-                    })
-        
-        return frame, vehicle_count, vehicle_breakdown, detections
+        return frame, emergency_count, emergency_detections
+    
+except Exception as e:
+    print(f"⚠ Emergency vehicle model not available: {e}")
+    print("→ Emergency vehicle detection will not be available")
+    EMERGENCY_MODEL_AVAILABLE = False
 
 # =============================================================================
 # UNIFIED DETECTION FUNCTIONS
 # =============================================================================
 
 def detect_vehicles_live(frame):
-    """Unified detection for live camera - uses best available method"""
+    """
+    Detection for live camera - uses PyTorch YOLO if available, otherwise OpenCV YOLO
+    """
     (H, W) = frame.shape[:2]
     
-    if USE_PYTORCH:
+    # Use PyTorch for live camera if available, otherwise fall back to OpenCV
+    if USE_PYTORCH_LIVE:
         frame, vehicle_count, vehicle_breakdown, _ = detect_vehicles_pytorch(frame)
     else:
         frame, vehicle_count, vehicle_breakdown, _ = detect_vehicles_opencv(frame)
@@ -238,13 +358,14 @@ def detect_vehicles_live(frame):
     return frame
 
 def detect_vehicles_image(image_path):
-    """Detect vehicles in uploaded image"""
+    """
+    Detection for uploaded images - ALWAYS uses OpenCV YOLO for more accurate results
+    Used by: Image Upload, Video Analysis, Multi-Lane Intersection
+    """
     image = cv2.imread(image_path)
     
-    if USE_PYTORCH:
-        result_image, count, breakdown, detections = detect_vehicles_pytorch(image)
-    else:
-        result_image, count, breakdown, detections = detect_vehicles_opencv(image)
+    # ALWAYS use OpenCV YOLO for image/video/multi-lane (more accurate)
+    result_image, count, breakdown, detections = detect_vehicles_opencv(image)
     
     # Add summary overlay
     summary = f"Total Vehicles: {count}"
@@ -267,7 +388,7 @@ def generate_frames():
     
     frame_count = 0
     start_time = time.time()
-    skip_frames = 1 if USE_PYTORCH else 2
+    skip_frames = 1 if USE_PYTORCH_LIVE else 2  # PyTorch processes faster
     last_processed_frame = None
     
     while True:
@@ -278,7 +399,7 @@ def generate_frames():
         if frame_count % skip_frames == 0:
             frame = detect_vehicles_live(frame)
             last_processed_frame = frame.copy()
-        elif last_processed_frame is not None and not USE_PYTORCH:
+        elif last_processed_frame is not None and not USE_PYTORCH_LIVE:
             frame = last_processed_frame
         
         frame_count += 1
@@ -437,6 +558,164 @@ def upload_multi():
     })
 
 # =============================================================================
+# FLASK ROUTES - EMERGENCY VEHICLE DETECTION
+# =============================================================================
+
+@app.route('/upload-emergency', methods=['POST'])
+def upload_emergency():
+    """Handle emergency vehicle detection for 4-way intersection with priority logic"""
+    if not EMERGENCY_MODEL_AVAILABLE:
+        return jsonify({'error': 'Emergency vehicle detection model not available'}), 503
+    
+    lane_names = ['North', 'East', 'South', 'West']
+    results = []
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    for idx, lane in enumerate(lane_names):
+        file_key = f'lane{idx + 1}'
+        
+        if file_key not in request.files:
+            results.append({
+                'lane': lane,
+                'error': 'No image uploaded',
+                'count': 0,
+                'emergency_count': 0
+            })
+            continue
+        
+        file = request.files[file_key]
+        if file.filename == '':
+            results.append({
+                'lane': lane,
+                'error': 'No file selected',
+                'count': 0,
+                'emergency_count': 0
+            })
+            continue
+        
+        filename = f"{timestamp}_emergency_{lane}_{file.filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        try:
+            # Read the image
+            print(f"Processing {filename}...")
+            image = cv2.imread(filepath)
+            if image is None:
+                raise ValueError(f"Failed to read image: {filepath}")
+                
+            result_image = image.copy()
+            
+            # Step 1: Detect emergency vehicles using best.pt model
+            print("Running emergency vehicle detection...")
+            result_image, emergency_count, emergency_detections = detect_emergency_vehicles(result_image.copy())
+            print(f"Emergency count: {emergency_count}")
+            
+            # Extract bounding boxes of emergency vehicles to exclude from regular detection
+            emergency_bboxes = [det['bbox'] for det in emergency_detections]
+            
+            # Step 2: Detect regular vehicles using OpenCV YOLO (excluding emergency vehicle regions)
+            print("Running regular vehicle detection...")
+            result_image, vehicle_count, vehicle_breakdown, _ = detect_vehicles_opencv(result_image, exclude_boxes=emergency_bboxes)
+            print(f"Regular count: {vehicle_count}")
+            
+            # Add summary overlay
+            summary = f"Total: {vehicle_count} | Emergency: {emergency_count}"
+            cv2.rectangle(result_image, (10, 10), (450, 50), (0, 0, 0), -1)
+            cv2.putText(result_image, summary, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 
+                       1.0, (0, 255, 0), 2)
+            
+            # Save result image (full resolution)
+            result_filename = f"result_{timestamp}_emergency_{lane}.jpg"
+            result_path = os.path.join(app.config['RESULTS_FOLDER'], result_filename)
+            cv2.imwrite(result_path, result_image)
+            
+            # Optimization: Resize for display and compress
+            height, width = result_image.shape[:2]
+            max_display_width = 800
+            if width > max_display_width:
+                scale = max_display_width / width
+                new_width = int(width * scale)
+                new_height = int(height * scale)
+                display_image = cv2.resize(result_image, (new_width, new_height))
+            else:
+                display_image = result_image
+
+            # Encode image to base64 with optimization
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+            _, buffer = cv2.imencode('.jpg', display_image, encode_param)
+            img_base64 = base64.b64encode(buffer).decode('utf-8')
+            
+            results.append({
+                'lane': lane,
+                'count': vehicle_count,
+                'emergency_count': emergency_count,
+                'breakdown': vehicle_breakdown,
+                'result_image': f"data:image/jpeg;base64,{img_base64}",
+                'result_filename': result_filename
+            })
+        except Exception as e:
+            import traceback
+            print(f"ERROR processing {lane}: {str(e)}")
+            print(traceback.format_exc())
+            results.append({
+                'lane': lane,
+                'error': str(e),
+                'count': 0,
+                'emergency_count': 0
+            })
+    
+    # PRIORITY SIGNAL CONTROL LOGIC
+    # Priority 1: Lanes with emergency vehicles
+    # Priority 2: If multiple lanes have emergency vehicles, use vehicle count as tiebreaker
+    # Priority 3: If no emergency vehicles, use normal traffic density
+    
+    emergency_lanes = [(i, r) for i, r in enumerate(results) if r.get('emergency_count', 0) > 0]
+    
+    if emergency_lanes:
+        # At least one lane has emergency vehicle(s)
+        # Sort by emergency count first, then by regular vehicle count
+        emergency_lanes.sort(key=lambda x: (x[1].get('emergency_count', 0), x[1].get('count', 0)), reverse=True)
+        green_idx = emergency_lanes[0][0]
+        priority_reason = f"Emergency vehicle detected in {lane_names[green_idx]} lane. Priority given to emergency vehicles."
+        
+        if len(emergency_lanes) > 1:
+            priority_reason += f" Multiple emergency vehicles detected. {lane_names[green_idx]} has highest priority based on vehicle count."
+    else:
+        # No emergency vehicles, use normal traffic density logic
+        counts = [r.get('count', 0) for r in results]
+        green_idx = counts.index(max(counts)) if counts else 0
+        priority_reason = "No emergency vehicles detected. Signal assigned based on traffic density."
+    
+    total_vehicles = sum(r.get('count', 0) for r in results)
+    total_emergency = sum(r.get('emergency_count', 0) for r in results)
+    
+    signal_decision = {
+        'green_lane': lane_names[green_idx],
+        'green_lane_count': results[green_idx].get('count', 0),
+        'total_vehicles': total_vehicles,
+        'total_emergency': total_emergency,
+        'priority_reason': priority_reason,
+        'signals': [
+            {
+                'lane': lane_names[i],
+                'status': 'GREEN' if i == green_idx else 'RED',
+                'count': results[i].get('count', 0),
+                'emergency_count': results[i].get('emergency_count', 0),
+                'has_emergency': results[i].get('emergency_count', 0) > 0
+            }
+            for i in range(len(lane_names))
+        ]
+    }
+    
+    return jsonify({
+        'success': True,
+        'results': results,
+        'signal_decision': signal_decision
+    })
+
+
+# =============================================================================
 # FLASK ROUTES - VIDEO UPLOAD
 # =============================================================================
 
@@ -478,11 +757,8 @@ def upload_video():
             
             # Only process every nth frame
             if frame_count % frame_skip == 0:
-                # Detect vehicles
-                if USE_PYTORCH:
-                    processed_frame, count, breakdown, _ = detect_vehicles_pytorch(frame.copy())
-                else:
-                    processed_frame, count, breakdown, _ = detect_vehicles_opencv(frame.copy())
+                # Detect vehicles using OpenCV YOLO (more accurate)
+                processed_frame, count, breakdown, _ = detect_vehicles_opencv(frame.copy())
                 
                 # Save processed frame
                 frame_filename = f"frame_{timestamp}_{processed_count:04d}.jpg"
@@ -630,15 +906,21 @@ def get_network_stats():
 # MAIN
 # =============================================================================
 
+
 if __name__ == '__main__':
     print("=" * 70)
     print("SMART TRAFFIC MANAGEMENT SYSTEM - UNIFIED BACKEND")
     print("=" * 70)
-    print(f"\n🔧 Mode: {'GPU-Accelerated (PyTorch)' if USE_PYTORCH else 'CPU-Optimized (OpenCV)'}")
-    print(f"🎮 Device: {current_stats['device']}")
+    print("\n🎯 YOLO CONFIGURATION:")
+    print(f"   📹 Live Camera: {'PyTorch YOLOv8 (GPU)' if USE_PYTORCH_LIVE else 'OpenCV YOLOv3 (CPU)'}")
+    print(f"   🖼️  Image Upload: OpenCV YOLOv3 (CPU)")
+    print(f"   🎬 Video Analysis: OpenCV YOLOv3 (CPU)")
+    print(f"   🚦 Multi-Lane: OpenCV YOLOv3 (CPU)")
+    print(f"\n🎮 Device: {current_stats['device']}")
     print("\n🌐 Starting unified web server...")
     print("📍 Backend running on: http://localhost:5005")
     print("\n📹 Camera source:", camera_source)
     print("=" * 70 + "\n")
     
     app.run(debug=False, host='0.0.0.0', port=5005, threaded=True)
+
