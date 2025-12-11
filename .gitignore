@@ -26,9 +26,11 @@ MANIFEST
 # Virtual Environment
 venv/
 venv311/
+venv_gpu/
 ENV/
 env/
 .venv
+node_modules/
 
 # IDEs
 .vscode/
