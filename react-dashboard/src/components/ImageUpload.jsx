@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TrafficSignalLoader from './TrafficSignalLoader';
 
 export default function ImageUpload() {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -173,11 +174,10 @@ export default function ImageUpload() {
             </div>
 
             {uploading && (
-                <div className="loading-overlay">
-                    <div className="spinner"></div>
-                    <h3>Analyzing traffic image...</h3>
-                    <p>Detecting vehicles using YOLO AI model</p>
-                </div>
+                <TrafficSignalLoader
+                    message="Analyzing traffic image..."
+                    description="Detecting vehicles using YOLO AI model"
+                />
             )}
 
             {error && (

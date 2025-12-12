@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TrafficSignalLoader from './TrafficSignalLoader';
 
 export default function MultiLaneAnalysis() {
     const [selectedFiles, setSelectedFiles] = useState({});
@@ -208,11 +209,10 @@ export default function MultiLaneAnalysis() {
             </button>
 
             {analyzing && (
-                <div className="loading-overlay">
-                    <div className="spinner"></div>
-                    <h3>Analyzing 4-way intersection...</h3>
-                    <p>Detecting vehicles in all lanes using YOLO AI</p>
-                </div>
+                <TrafficSignalLoader
+                    message="Analyzing 4-way intersection..."
+                    description="Detecting vehicles in all lanes using YOLO AI"
+                />
             )}
 
             {error && (

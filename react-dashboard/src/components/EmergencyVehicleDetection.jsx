@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TrafficSignalLoader from './TrafficSignalLoader';
 
 export default function EmergencyVehicleDetection() {
     const [selectedFiles, setSelectedFiles] = useState({});
@@ -259,11 +260,10 @@ export default function EmergencyVehicleDetection() {
             </button>
 
             {analyzing && (
-                <div className="loading-overlay">
-                    <div className="spinner"></div>
-                    <h3>Analyzing for emergency vehicles...</h3>
-                    <p>Using custom ambulance detection model</p>
-                </div>
+                <TrafficSignalLoader
+                    message="Analyzing for emergency vehicles..."
+                    description="Using custom ambulance detection model"
+                />
             )}
 
             {error && (

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TrafficSignalLoader from './TrafficSignalLoader';
 
 export default function VideoAnalysis() {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -174,14 +175,10 @@ export default function VideoAnalysis() {
             </div>
 
             {processing && (
-                <div className="loading-overlay">
-                    <div className="spinner"></div>
-                    <h3>Processing video...</h3>
-                    <p>Analyzing frames with YOLO AI model</p>
-                    <p style={{ fontSize: '0.9rem', marginTop: '1rem', opacity: 0.8 }}>
-                        This may take a few moments depending on video length
-                    </p>
-                </div>
+                <TrafficSignalLoader
+                    message="Processing video..."
+                    description="Analyzing frames with YOLO AI model - This may take a few moments"
+                />
             )}
 
             {error && (
