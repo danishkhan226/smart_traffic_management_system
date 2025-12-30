@@ -603,12 +603,10 @@ def upload_emergency():
             image = cv2.imread(filepath)
             if image is None:
                 raise ValueError(f"Failed to read image: {filepath}")
-                
-            result_image = image.copy()
             
-            # Step 1: Detect emergency vehicles using best.pt model
+            # Step 1: Detect emergency vehicles using best.pt model (get detections only)
             print("Running emergency vehicle detection...")
-            result_image, emergency_count, emergency_detections = detect_emergency_vehicles(result_image.copy())
+            temp_image, emergency_count, emergency_detections = detect_emergency_vehicles(image.copy())
             print(f"Emergency count: {emergency_count}")
             
             # Extract bounding boxes of emergency vehicles to exclude from regular detection
@@ -616,8 +614,28 @@ def upload_emergency():
             
             # Step 2: Detect regular vehicles using OpenCV YOLO (excluding emergency vehicle regions)
             print("Running regular vehicle detection...")
-            result_image, vehicle_count, vehicle_breakdown, _ = detect_vehicles_opencv(result_image, exclude_boxes=emergency_bboxes)
+            result_image, vehicle_count, vehicle_breakdown, _ = detect_vehicles_opencv(image.copy(), exclude_boxes=emergency_bboxes)
             print(f"Regular count: {vehicle_count}")
+            
+            # Step 3: Redraw emergency vehicle bounding boxes on top (RED boxes)
+            for det in emergency_detections:
+                x, y, w, h = det['bbox']
+                x1, y1, x2, y2 = x, y, x + w, y + h
+                
+                # Draw RED bounding box for emergency vehicles
+                color = (0, 0, 255)  # Red color (BGR format)
+                cv2.rectangle(result_image, (x1, y1), (x2, y2), color, 3)
+                
+                # Extract confidence from detection
+                conf_str = det['confidence'].strip('%')
+                conf_float = float(conf_str) / 100.0
+                label = f"AMBULANCE {conf_float:.2f}"
+                
+                # Add text with background for better visibility
+                (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+                cv2.rectangle(result_image, (x1, y1 - text_h - 10), (x1 + text_w, y1), color, -1)
+                cv2.putText(result_image, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 
+                           0.6, (255, 255, 255), 2)
             
             # Add summary overlay
             summary = f"Total: {vehicle_count} | Emergency: {emergency_count}"
